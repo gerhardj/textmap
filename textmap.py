@@ -43,6 +43,10 @@ SectionREs = (
   #re.compile('^\-\>\s*(\w+)\s*'),                          # coffeescript method
   
   re.compile('\w+[\w\s]*?class (\w*)'),                    # java class
+  
+  re.compile('package\s*(\w+)\s*\;'),                      # perl package
+  re.compile('sub\s*(\w+).*\{'),                          # perl method
+  
 )
 
 SubsectionREs = (
@@ -612,7 +616,7 @@ def mark_changed_lines(doc,original,current):
   c=0
   for oline in original:
     end = doc.get_iter_at_mark(oline.mark)
-    slice = doc.get_slice(start,end)
+    slice = doc.get_slice(start,end, True)
     # see if the first line between the marks is the original line
     if slice.split('\n',1)[0] == oline.raw:
       current[c].changed = False
@@ -803,7 +807,7 @@ class TextmapView(Gtk.VBox):
       return
       
     docrec = self.doc_attached_data[id(doc)]
-    s = doc.get_search_text()[0] #TypeError: get_search_text() takes exactly 2 arguments (1 given)
+    s = doc.get_search_text(0)
     if s <> docrec.search_text:
       docrec.search_text = s
       queue_refresh(self)    
@@ -869,14 +873,12 @@ class TextmapView(Gtk.VBox):
     searchBG = (0,1,0)
       
     
-    print doc
-       
     try:
       #apparently this isn't best approach anymore... http://stackoverflow.com/questions/10270080/how-to-draw-a-gdkpixbuf-using-gtk3-and-pygobject
       win = widget.get_window()
     except AttributeError:
       win = widget.window
-    w,h = map(float,[win.get_width(), win.get_height()]) # AttributeError: 'gtk.gdk.X11Window' object has no attribute 'get_size'
+    w,h = map(float,[win.get_width(), win.get_height()])
     cr = win.cairo_create()
     #cr = widget.window.cairo_create() #AttributeError: 'DrawingArea' object has no attribute 'window'
     
@@ -897,7 +899,7 @@ class TextmapView(Gtk.VBox):
       cr.fill()
       cr.move_to(0,0)
             
-    search_text = doc.get_search_text()[0] #TypeError: get_search_text() takes exactly 2 arguments (1 given)
+    search_text = doc.get_search_text(0)
       
     #if not search_text and not self.draw_sections:
     #    return
